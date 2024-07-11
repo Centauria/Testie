@@ -5,21 +5,12 @@
 
 use egui;
 use eframe;
-use pyo3::prelude::*;
-use pyo3::types::IntoPyDict;
+use std::io;
+use std::io::Write;
+use std::process::Command;
+use jlrs::prelude::*;
 
 fn main() -> eframe::Result {
-    let path = std::env::var("PATH").unwrap();
-    let mut paths: Vec<&str> = path.split(";").collect();
-    paths.extend([r"D:\PF\anaconda3\DLLs",
-        r"D:\PF\anaconda3\Lib",
-        r"D:\PF\anaconda3",
-        r"D:\PF\anaconda3\Lib\site-packages",
-        r"D:\PF\anaconda3\Lib\site-packages\win32",
-        r"D:\PF\anaconda3\Lib\site-packages\win32\lib",
-        r"D:\PF\anaconda3\Lib\site-packages\Pythonwin"]);
-    std::env::set_var("PATH", paths.join(";"));
-    pyo3::prepare_freethreaded_python();
     env_logger::init(); // Log to stderr (if you run with `RUST_LOG=debug`).
 
     let options = eframe::NativeOptions {
@@ -31,19 +22,40 @@ fn main() -> eframe::Result {
     let mut name = "Arthur".to_owned();
     let mut age = 42;
 
-    Python::with_gil(|py| -> PyResult<()> {
-        let sys = py.import_bound("sys")?;
-        let version: String = sys.getattr("version")?.extract()?;
-        let path: Vec<String> = sys.getattr("path")?.extract()?;
+    let mut julia = Builder::new().start_local().unwrap();
 
-        let locals = [("os", py.import_bound("os")?)].into_py_dict_bound(py);
-        let code = "os.getenv('USER') or os.getenv('USERNAME') or 'Unknown'";
-        let user: String = py.eval_bound(code, None, Some(&locals))?.extract()?;
+    julia.with_stack(|mut stack| {
+        stack.scope(|mut frame| -> JlrsResult<()> {
+            let w = Value::new(&mut frame, 6i32);
+            let v4 = unsafe {
+                Module::base(&frame)
+                    .global(&mut frame, "zeros")?
+                    .call(&mut frame, [w])
+                    .into_jlrs_result()?
+            };
+            print!("zeros({}) = ", w.unbox::<i32>()?);
+            io::stdout().flush().unwrap();
+            unsafe {
+                Module::base(&frame)
+                    .global(&mut frame, "println")?
+                    .call(&mut frame, [v4])
+                    .into_jlrs_result()?;
+            }
+            Ok(())
+        })
+    }).unwrap();
 
-        println!("Hello {}, I'm Python {}", user, version);
-        println!("PYTHONPATH={:?}", path);
-        Ok(())
-    }).expect("panic");
+    let julia_version = Command::new("julia")
+        .args(["src_julia/test.jl"])
+        .output()
+        .expect("failed");
+    io::stdout().write_all(&julia_version.stdout).unwrap();
+
+    let python_version = Command::new("python")
+        .args(["src_python/test.py"])
+        .output()
+        .expect("failed");
+    io::stdout().write_all(&python_version.stdout).unwrap();
 
     eframe::run_simple_native("Testie", options, move |ctx, _frame| {
         egui::CentralPanel::default().show(ctx, |ui| {
