@@ -12,3 +12,5 @@ env_logger = { version = "0.11.3", default-features = false, features = [
 ] }
 wasapi = "0.15.0"
 jlrs = { version = "0.21.0", features = ["local-rt", "julia-1-10"] }
+expectrl = "0.7.1"
+regex = "1.10.5"
