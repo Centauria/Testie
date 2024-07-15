@@ -1,7 +1,9 @@
 use std::io;
 use std::io::Write;
+use std::path::PathBuf;
 use std::process::Command;
 use jlrs::prelude::*;
+use crate::util;
 
 pub fn call(filename: &str, args: Option<Vec<&str>>) -> String {
     let mut filename_and_args = vec![filename];
@@ -41,4 +43,18 @@ fn julia_runtime_example() {
             Ok(())
         })
     }).unwrap();
+}
+
+pub fn download_julia() {
+    let mut julia_path = PathBuf::new();
+    julia_path.push(util::get_current_working_dir());
+    julia_path.push("runtime");
+    julia_path.push("julia");
+    if !julia_path.exists() {
+        std::fs::create_dir_all(&julia_path).unwrap();
+        util::download(
+            "https://julialang-s3.julialang.org/bin/winnt/x64/1.10/julia-1.10.4-win64.zip".to_owned(),
+            &julia_path)
+            .expect("download error");
+    }
 }

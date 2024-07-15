@@ -22,14 +22,14 @@ struct WindowStates {
 pub struct Main {
     settings: Settings,
     window_states: WindowStates,
-    python_runtime: ReplSession,
+    python_runtime: Option<ReplSession>,
 }
 impl Default for Main {
     fn default() -> Self {
         Main {
             settings: Settings::default(),
             window_states: WindowStates::default(),
-            python_runtime: py::python_runtime(),
+            python_runtime: None,
         }
     }
 }
@@ -57,17 +57,28 @@ impl eframe::App for Main {
                     if ui.button("Test python").clicked() {
                         print!("{}", py::call("src_python/test.py", None));
                     }
+                    ui.separator();
+                    if ui.button("Download python").clicked() {
+                        py::download_python();
+                    }
+                    if ui.button("Download julia").clicked() {
+                        julia::download_julia();
+                    }
                 })
             });
             ui.heading("Mic Frequency Response Estimation");
 
             ui.label(format!("BPM {}, sample rate {}", self.settings.bpm, self.settings.sr));
             if ui.button("Numpy").clicked() {
-                py::runfile(&mut self.python_runtime, "src_python/test.py");
-                println!("{}", py::read_output(&mut self.python_runtime, r"\[.*\]".to_owned()));
+                if let Some(runtime) = &mut self.python_runtime {
+                    py::runfile(runtime, "src_python/test.py");
+                    println!("{}", py::read_output(runtime, r"\[.*\]".to_owned()));
+                }
             }
             if ui.button("quit").clicked() {
-                self.python_runtime.exit().expect("quit failed");
+                if let Some(runtime) = &mut self.python_runtime {
+                    runtime.exit().expect("quit failed");
+                }
             }
             if self.window_states.settings {
                 egui::Window::new("Preferences")
