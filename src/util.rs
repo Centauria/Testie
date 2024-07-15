@@ -1,5 +1,6 @@
 use std::env;
 use std::fs::File;
+use std::io::Write;
 use std::path::Path;
 
 pub fn get_current_working_dir() -> String {
@@ -22,7 +23,7 @@ pub fn download(url: String, path: &Path) -> Result<(), reqwest::Error> {
         let fname = path.join(fname);
         File::create(fname).expect("file create error")
     };
-    let content = response.text()?;
-    std::io::copy(&mut content.as_bytes(), &mut dest).expect("copy error");
+    let content = response.bytes()?;
+    dest.write_all(&*content).expect("copy error");
     Ok(())
 }
