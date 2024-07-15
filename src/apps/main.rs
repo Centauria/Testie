@@ -1,5 +1,7 @@
 use eframe::Frame;
 use egui::Context;
+use expectrl::repl::ReplSession;
+use crate::caller::py;
 
 struct Settings {
     sr: i32,
@@ -13,9 +15,17 @@ impl Default for Settings {
         }
     }
 }
-#[derive(Default)]
 pub struct Main {
     settings: Settings,
+    python_runtime: ReplSession,
+}
+impl Default for Main {
+    fn default() -> Self {
+        Main {
+            settings: Settings::default(),
+            python_runtime: py::python_runtime(),
+        }
+    }
 }
 
 impl eframe::App for Main {
@@ -30,6 +40,13 @@ impl eframe::App for Main {
                     ui.selectable_value(&mut self.settings.sr, 48000, "48000")
                 });
             ui.label(format!("BPM {}, sample rate {}", self.settings.bpm, self.settings.sr));
+            if ui.button("Numpy").clicked() {
+                py::runfile(&mut self.python_runtime, "src_python/test.py");
+                println!("{}", py::read_output(&mut self.python_runtime, r"\[.*\]".to_owned()));
+            }
+            if ui.button("quit").clicked() {
+                self.python_runtime.exit().expect("quit failed");
+            }
         });
     }
 }

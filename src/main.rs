@@ -20,13 +20,6 @@ fn main() -> eframe::Result {
         ..Default::default()
     };
 
-    let mut python_runtime = py::python_runtime();
-    py::runfile(&mut python_runtime, "src_python/test.py");
-    println!("{}", py::read_output(&mut python_runtime, r"\[.*\]".to_owned()));
-    py::runfile(&mut python_runtime, "src_python/test.py");
-    println!("{}", py::read_output(&mut python_runtime, r"\[.*\]".to_owned()));
-    python_runtime.exit().expect("quit failed");
-
     let mut r = julia::call("src_julia/test.jl", None);
     print!("{}", r);
 
