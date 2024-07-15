@@ -11,4 +11,4 @@ env_logger = { version = "0.11.3", default-features = false, features = [
     "humantime",
 ] }
 wasapi = "0.15.0"
-jlrs = { version = "0.20.0", features = ["local-rt", "julia-1-10"] }
+jlrs = { version = "0.21.0", features = ["local-rt", "julia-1-10"] }
