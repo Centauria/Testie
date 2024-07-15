@@ -1,4 +1,4 @@
 import numpy as np
 
-a = np.random.rand(4, 1)
+a = np.random.rand(6)
 print(a)
