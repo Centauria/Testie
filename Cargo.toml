@@ -13,4 +13,6 @@ env_logger = { version = "0.11.3", default-features = false, features = [
 wasapi = "0.15.0"
 jlrs = { version = "0.21.0", features = ["local-rt", "julia-1-10"] }
 expectrl = "0.7.1"
-reqwest = { version = "0.12", features = ["blocking", "json"] }
+reqwest = { version = "0.12", features = ["blocking", "json", "stream"] }
+tokio = { version = "1", features = ["time", "sync", "rt-multi-thread"] }
+futures-util = "0.3.30"

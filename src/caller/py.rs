@@ -36,7 +36,7 @@ fn add_to_path() {
     }
 }
 
-pub fn download_python() {
+pub async fn download_python() {
     let mut python_path = PathBuf::new();
     python_path.push(util::get_current_working_dir());
     python_path.push("runtime");
@@ -46,7 +46,8 @@ pub fn download_python() {
         util::download(
             "https://www.python.org/ftp/python/3.12.4/python-3.12.4-embed-amd64.zip".to_owned(),
             &python_path)
-            .expect("download error");
+            .await
+            .expect("");
     }
 }
 #[allow(dead_code)]

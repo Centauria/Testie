@@ -1,6 +1,8 @@
 use eframe::Frame;
 use egui::{Align2, Context, Vec2};
 use expectrl::repl::ReplSession;
+use tokio::runtime::Runtime;
+
 use crate::caller::{julia, py};
 
 struct Settings {
@@ -23,6 +25,8 @@ pub struct Main {
     settings: Settings,
     window_states: WindowStates,
     python_runtime: Option<ReplSession>,
+    tokio_runtime: Runtime,
+    status_bar_content: String,
 }
 impl Default for Main {
     fn default() -> Self {
@@ -30,6 +34,11 @@ impl Default for Main {
             settings: Settings::default(),
             window_states: WindowStates::default(),
             python_runtime: None,
+            tokio_runtime: tokio::runtime::Builder::new_multi_thread()
+                .enable_all()
+                .build()
+                .unwrap(),
+            status_bar_content: "".to_string(),
         }
     }
 }
@@ -59,10 +68,12 @@ impl eframe::App for Main {
                     }
                     ui.separator();
                     if ui.button("Download python").clicked() {
-                        py::download_python();
+                        self.tokio_runtime.spawn(py::download_python());
+                        self.status_bar_content = "Downloading python ...".to_string();
                     }
                     if ui.button("Download julia").clicked() {
-                        julia::download_julia();
+                        self.tokio_runtime.spawn(julia::download_julia());
+                        self.status_bar_content = "Downloading julia ...".to_string();
                     }
                 })
             });
@@ -80,6 +91,14 @@ impl eframe::App for Main {
                     runtime.exit().expect("quit failed");
                 }
             }
+            egui::TopBottomPanel::bottom("bottom_panel")
+                .resizable(false)
+                .min_height(0.0)
+                .show_inside(ui, |ui| {
+                    ui.vertical(|ui| {
+                        ui.label(&self.status_bar_content);
+                    });
+                });
             if self.window_states.settings {
                 egui::Window::new("Preferences")
                     .max_size(Vec2 { x: 300.0, y: 200.0 })

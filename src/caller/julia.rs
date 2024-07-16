@@ -45,7 +45,7 @@ fn julia_runtime_example() {
     }).unwrap();
 }
 
-pub fn download_julia() {
+pub async fn download_julia() {
     let mut julia_path = PathBuf::new();
     julia_path.push(util::get_current_working_dir());
     julia_path.push("runtime");
@@ -54,7 +54,8 @@ pub fn download_julia() {
         std::fs::create_dir_all(&julia_path).unwrap();
         util::download(
             "https://julialang-s3.julialang.org/bin/winnt/x64/1.10/julia-1.10.4-win64.zip".to_owned(),
-            &julia_path)
+            &julia_path,)
+            .await
             .expect("download error");
     }
 }
