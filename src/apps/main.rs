@@ -105,6 +105,7 @@ impl eframe::App for Main {
                     .collapsible(false)
                     .anchor(Align2::CENTER_CENTER, Vec2 { x: 0.0, y: 0.0 })
                     .show(ctx, |ui| {
+                        self.theme_switcher(ui, ctx);
                         ui.add(egui::Slider::new(&mut self.settings.bpm, 60.0..=240.0).text("BPM"));
                         egui::ComboBox::from_label("Samplerate")
                             .selected_text(format!("{:?}", self.settings.sr))
