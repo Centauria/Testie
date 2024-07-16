@@ -43,11 +43,12 @@ pub async fn download_python() {
     python_path.push("python");
     if !python_path.exists() {
         std::fs::create_dir_all(&python_path).unwrap();
-        util::download(
+        let filename = util::download(
             "https://www.python.org/ftp/python/3.12.4/python-3.12.4-embed-amd64.zip".to_owned(),
             &python_path)
             .await
             .expect("");
+        util::decompress(filename, python_path.as_path()).expect("Error while decompressing");
     }
 }
 #[allow(dead_code)]
