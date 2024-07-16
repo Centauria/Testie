@@ -106,3 +106,16 @@ impl eframe::App for Main {
         });
     }
 }
+
+impl Main {
+    fn theme_switcher(&mut self, ui: &mut egui::Ui, ctx: &egui::Context) {
+        ui.horizontal(|ui| {
+            if ui.button("Dark").clicked() {
+                ctx.set_visuals(egui::Visuals::dark());
+            }
+            if ui.button("Light").clicked() {
+                ctx.set_visuals(egui::Visuals::light());
+            }
+        });
+    }
+}
