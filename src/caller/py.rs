@@ -2,10 +2,9 @@ use std::env;
 use std::io::Write;
 use std::path::PathBuf;
 use std::process::Command;
-
-use expectrl::Regex;
 use expectrl::repl::ReplSession;
-
+use tokio::fs::{OpenOptions, read_to_string};
+use tokio::io::AsyncWriteExt;
 use crate::util;
 
 pub fn call(python_path: &str, filename: &str, args: Option<Vec<&str>>) -> String {
@@ -57,7 +56,25 @@ pub async fn download_python() {
         call(python_path.join("python.exe").to_str().unwrap(),
              get_pip.as_str(),
              None);
-        todo!("modify content of python3XX._pth to include ./Lib and ./Lib/site-packages");
+        let content = read_to_string(python_path.join("python312._pth"))
+            .await.expect("Cannot read python312._pth");
+        let mut pth = OpenOptions::new()
+            .write(true)
+            .truncate(true)
+            .open(python_path.join("python312._pth"))
+            .await
+            .expect("Cannot write to python312._pth");
+        let pattern = regex::Regex::new(r"^#import site$").unwrap();
+        let mut buf = Vec::<u8>::new();
+        for line in content.lines() {
+            if pattern.is_match(line) {
+                writeln!(buf, "import site").unwrap();
+            } else {
+                writeln!(buf, "{}", line).unwrap();
+            }
+            pth.write_all(&buf).await.expect("Cannot write to python312._pth");
+            buf.truncate(0);
+        }
     }
 }
 #[allow(dead_code)]
@@ -82,6 +99,6 @@ pub fn runfile(session: &mut ReplSession, filename: &str) {
     session.send_line(format!("exec(open('{filename}').read())")).unwrap();
 }
 pub fn read_output(session: &mut ReplSession, regex_string: String) -> String {
-    let found = session.expect(Regex(regex_string)).unwrap();
+    let found = session.expect(expectrl::Regex(regex_string)).unwrap();
     String::from_utf8_lossy(found.get(0).unwrap()).to_string()
 }
