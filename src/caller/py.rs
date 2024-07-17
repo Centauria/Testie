@@ -8,14 +8,14 @@ use expectrl::repl::ReplSession;
 
 use crate::util;
 
-pub fn call(filename: &str, args: Option<Vec<&str>>) -> String {
+pub fn call(python_path: &str, filename: &str, args: Option<Vec<&str>>) -> String {
     let mut filename_and_args = vec![filename];
     if let Some(args) = args {
         for arg in args {
             filename_and_args.push(arg);
         }
     }
-    let python_output = Command::new("python")
+    let python_output = Command::new(python_path)
         .args(filename_and_args)
         .output()
         .expect("failed");
@@ -49,14 +49,34 @@ pub async fn download_python() {
             .await
             .expect("");
         util::decompress(filename, python_path.as_path()).expect("Error while decompressing");
+        let get_pip = util::download(
+            "https://bootstrap.pypa.io/get-pip.py".to_owned(),
+            &python_path)
+            .await
+            .expect("");
+        call(python_path.join("python.exe").to_str().unwrap(),
+             get_pip.as_str(),
+             None);
+        todo!("modify content of python3XX._pth to include ./Lib and ./Lib/site-packages");
     }
 }
 #[allow(dead_code)]
-pub fn python_runtime() -> ReplSession {
-    let mut session = expectrl::repl::spawn_python().unwrap();
-    session.execute("import os").unwrap();
-    session.execute(format!("os.chdir(r'{}')", util::get_current_working_dir())).unwrap();
-    session
+pub fn python_runtime() -> Option<ReplSession> {
+    let mut python_path = PathBuf::new();
+    python_path.push(util::get_current_working_dir());
+    python_path.push("runtime");
+    python_path.push("python");
+    python_path.push("python.exe");
+    if python_path.exists() {
+        let mut session = ReplSession::new(
+            expectrl::spawn(&python_path.to_str().unwrap()).unwrap(),
+            ">>>".to_owned(),
+            Some("import sys; sys.exit()".to_owned()),
+            false);
+        session.execute("import os").unwrap();
+        session.execute(format!("os.chdir(r'{}')", util::get_current_working_dir())).unwrap();
+        Some(session)
+    } else { None }
 }
 pub fn runfile(session: &mut ReplSession, filename: &str) {
     session.send_line(format!("exec(open('{filename}').read())")).unwrap();

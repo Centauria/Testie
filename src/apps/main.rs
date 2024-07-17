@@ -22,7 +22,7 @@ impl Default for Main {
     fn default() -> Self {
         Main {
             window_states: WindowStates::default(),
-            python_runtime: None,
+            python_runtime: py::python_runtime(),
             tokio_runtime: tokio::runtime::Builder::new_multi_thread()
                 .enable_all()
                 .build()
@@ -54,7 +54,9 @@ impl eframe::App for Main {
                         print!("{}", julia::call("src_julia/test.jl", None));
                     }
                     if ui.button("Test python").clicked() {
-                        print!("{}", py::call("src_python/test.py", None));
+                        print!("{}", py::call(&self.settings_window.state.python_path,
+                                              "src_python/test.py",
+                                              None));
                     }
                     ui.separator();
                     if ui.button("Download python").clicked() {
@@ -73,7 +75,7 @@ impl eframe::App for Main {
             if ui.button("Numpy").clicked() {
                 if let Some(runtime) = &mut self.python_runtime {
                     py::runfile(runtime, "src_python/test.py");
-                    println!("{}", py::read_output(runtime, r"\[.*\]".to_owned()));
+                    println!("{}", py::read_output(runtime, r"\d\.\d+\.\d+".to_owned()));
                 }
             }
             if ui.button("quit").clicked() {

@@ -1,17 +1,29 @@
+use std::path::PathBuf;
 use eframe::emath::{Align2, Vec2};
 use egui::{Context, Ui};
 use crate::apps::{View, Window};
+use crate::util;
 
 pub struct Settings {
     pub(crate) sr: i32,
     pub(crate) bpm: f32,
+    pub(crate) python_path: String,
 }
 
 impl Default for Settings {
     fn default() -> Self {
+        let mut python_path = PathBuf::new();
+        python_path.push(util::get_current_working_dir());
+        python_path.push("runtime");
+        python_path.push("python");
+        python_path.push("python.exe");
+        let python_path = if python_path.exists() {
+            python_path.to_str().unwrap()
+        } else { "" };
         Settings {
             sr: 44100,
             bpm: 120.0,
+            python_path: python_path.to_string(),
         }
     }
 }

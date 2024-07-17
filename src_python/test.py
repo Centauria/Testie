@@ -1,4 +1,3 @@
-import numpy as np
+import sys
 
-a = np.random.rand(6)
-print(a)
+print(sys.version)
