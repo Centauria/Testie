@@ -2,6 +2,7 @@ use std::env;
 use std::io::Write;
 use std::path::PathBuf;
 use std::process::Command;
+use egui::TextBuffer;
 use expectrl::repl::ReplSession;
 use tokio::fs::{OpenOptions, read_to_string};
 use tokio::io::AsyncWriteExt;
@@ -64,13 +65,11 @@ pub async fn download_python() {
             .open(python_path.join("python312._pth"))
             .await
             .expect("Cannot write to python312._pth");
-        let pattern = regex::Regex::new(r"^#import site$").unwrap();
         let mut buf = Vec::<u8>::new();
         for line in content.lines() {
-            if pattern.is_match(line) {
-                writeln!(buf, "import site").unwrap();
-            } else {
-                writeln!(buf, "{}", line).unwrap();
+            match line.trim() {
+                "#import site" => { writeln!(buf, "import site").unwrap(); }
+                _ => { writeln!(buf, "{}", line).unwrap(); }
             }
             pth.write_all(&buf).await.expect("Cannot write to python312._pth");
             buf.truncate(0);
