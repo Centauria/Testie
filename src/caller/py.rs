@@ -2,7 +2,6 @@ use std::env;
 use std::io::Write;
 use std::path::PathBuf;
 use std::process::Command;
-use egui::TextBuffer;
 use expectrl::repl::ReplSession;
 use tokio::fs::{OpenOptions, read_to_string};
 use tokio::io::AsyncWriteExt;
@@ -86,7 +85,7 @@ pub fn python_runtime() -> Option<ReplSession> {
     if python_path.exists() {
         let mut session = ReplSession::new(
             expectrl::spawn(&python_path.to_str().unwrap()).unwrap(),
-            ">>>".to_owned(),
+            ">>> ".to_owned(),
             Some("import sys; sys.exit()".to_owned()),
             false);
         session.execute("import os").unwrap();
@@ -94,10 +93,11 @@ pub fn python_runtime() -> Option<ReplSession> {
         Some(session)
     } else { None }
 }
-pub fn runfile(session: &mut ReplSession, filename: &str) {
-    session.send_line(format!("exec(open('{filename}').read())")).unwrap();
+pub fn run_string(session: &mut ReplSession, cmd: String) -> String {
+    let output = session.execute(&cmd).unwrap();
+    let output = output.strip_prefix(cmd.as_bytes()).unwrap();
+    String::from_utf8_lossy(output).trim().to_string()
 }
-pub fn read_output(session: &mut ReplSession, regex_string: String) -> String {
-    let found = session.expect(expectrl::Regex(regex_string)).unwrap();
-    String::from_utf8_lossy(found.get(0).unwrap()).to_string()
+pub fn run_file(session: &mut ReplSession, filename: &str) -> String {
+    run_string(session, format!("exec(open('{filename}').read())"))
 }

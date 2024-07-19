@@ -74,8 +74,7 @@ impl eframe::App for Main {
             ui.label(format!("BPM {}, sample rate {}", self.settings_window.state.bpm, self.settings_window.state.sr));
             if ui.button("Numpy").clicked() {
                 if let Some(runtime) = &mut self.python_runtime {
-                    py::runfile(runtime, "src_python/test.py");
-                    println!("{}", py::read_output(runtime, r"\d\.\d+\.\d+".to_owned()));
+                    println!("{}", py::run_file(runtime, "src_python/test.py"));
                 }
             }
             if ui.button("quit").clicked() {
